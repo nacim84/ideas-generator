@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+import argparse
 from datetime import datetime
 from email.mime.text import MIMEText
 from google.auth.transport.requests import Request
@@ -60,14 +61,20 @@ def send_message(service, sender, to, subject, message_text):
         return None
 
 def main():
+    parser = argparse.ArgumentParser(description='Send email report.')
+    parser.add_argument('--category', type=str, help='Category name of the report')
+    args = parser.parse_args()
+
     if not RECIPIENT_EMAIL:
         print("Error: RECIPIENT_EMAIL not set in .env")
         return
 
-    # Read the analysis report
-    report_path = os.path.join(os.path.dirname(__file__), 'latest_analysis.md')
+    # Read the analysis report specific to the category
+    filename = f"latest_analysis_{args.category}.md" if args.category else "latest_analysis.md"
+    report_path = os.path.join(os.path.dirname(__file__), filename)
+    
     if not os.path.exists(report_path):
-        print("Error: No analysis report found. Run analyze_ideas.py first.")
+        print(f"Error: Report file {filename} not found. Run analyze_ideas.py first.")
         return
 
     with open(report_path, 'r', encoding='utf-8') as f:
@@ -84,7 +91,10 @@ def main():
 
     print(f"Sending email to {RECIPIENT_EMAIL}...")
     current_date = datetime.now().strftime("%d/%m/%Y")
-    subject = f"[REDDIT] Idées Business Du Jour : {current_date}"
+    
+    cat_prefix = args.category if args.category else "REDDIT"
+    subject = f"[{cat_prefix}] Idées Business Du Jour : {current_date}"
+    
     send_message(
         service, 
         "me", 

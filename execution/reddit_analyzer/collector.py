@@ -77,7 +77,17 @@ def save_posts(conn, posts):
 
 def main():
     conn = init_db()
-    for sub in config['subreddits']:
+    
+    # Extract unique subreddits from all categories
+    target_subreddits = set()
+    if 'subreddits' in config: # Backward compatibility
+        target_subreddits.update(config['subreddits'])
+    
+    if 'categories' in config:
+        for cat_data in config['categories'].values():
+            target_subreddits.update(cat_data.get('subreddits', []))
+
+    for sub in target_subreddits:
         posts = collect_feed(sub)
         if posts:
             save_posts(conn, posts)

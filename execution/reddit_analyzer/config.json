@@ -1,10 +1,25 @@
 {
-    "subreddits": [
-        "business",
-        "entrepreneur",
-        "startups",
-        "smallbusiness",
-        "sideproject"
-    ],
+    "categories": {
+        "General_Business": {
+            "subreddits": ["business", "smallbusiness", "Entrepreneur"],
+            "weight": 1.0
+        },
+        "Tech_Startups": {
+            "subreddits": ["startups", "sideproject", "SaaS", "software"],
+            "weight": 1.0
+        },
+        "Marketing_Sales": {
+            "subreddits": ["marketing", "sales", "socialmedia", "growthhacking"],
+            "weight": 0.8
+        },
+        "Finance_Investing": {
+            "subreddits": ["investing", "stocks", "financialindependence", "SecurityAnalysis"],
+            "weight": 0.7
+        },
+        "AI_Tech": {
+            "subreddits": ["ArtificialInteligence", "MachineLearning", "technology", "ChatGPT"],
+            "weight": 0.9
+        }
+    },
     "db_name": "reddit_ideas.db"
 }

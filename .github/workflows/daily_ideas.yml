@@ -10,8 +10,61 @@ permissions:
   contents: write
 
 jobs:
-  generate-ideas:
+  setup-matrix:
     runs-on: ubuntu-latest
+    outputs:
+      categories: ${{ steps.set-matrix.outputs.categories }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Extract Categories from Config
+        id: set-matrix
+        run: |
+          # Read config.json and extract keys from "categories" object
+          CATEGORIES=$(jq -c '[.categories | keys[]]' execution/reddit_analyzer/config.json)
+          echo "Found categories: $CATEGORIES"
+          echo "categories=$CATEGORIES" >> $GITHUB_OUTPUT
+
+  collect-data:
+    # Collect data once globally to populate the DB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: |
+          cd execution/reddit_analyzer
+          uv sync --frozen || uv sync
+      
+      - name: Collect Reddit Posts
+        run: |
+          cd execution/reddit_analyzer
+          uv run collector.py
+
+      - name: Upload Database Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reddit-db
+          path: execution/reddit_analyzer/reddit_ideas.db
+          retention-days: 1
+
+  analyze-and-report:
+    needs: [setup-matrix, collect-data]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        category: ${{ fromJson(needs.setup-matrix.outputs.categories) }}
+      fail-fast: false # If one category fails, others continue
 
     steps:
     - name: Checkout repository
@@ -30,6 +83,12 @@ jobs:
         cd execution/reddit_analyzer
         uv sync --frozen || uv sync
 
+    - name: Download Database Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: reddit-db
+        path: execution/reddit_analyzer/
+
     - name: Create configuration files from Secrets
       run: |
         # Create .env
@@ -42,23 +101,32 @@ jobs:
         # Create token.json (This is crucial for skipping manual login)
         echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
 
-    - name: Collect Reddit Posts
+    - name: Analyze Ideas for ${{ matrix.category }}
       run: |
         cd execution/reddit_analyzer
-        uv run collector.py
+        uv run analyze_ideas.py --category "${{ matrix.category }}"
 
-    - name: Analyze Ideas with Gemini
+    - name: Send Email Report for ${{ matrix.category }}
       run: |
         cd execution/reddit_analyzer
-        uv run analyze_ideas.py
+        uv run send_email.py --category "${{ matrix.category }}"
 
-    - name: Send Email Report
-      run: |
-        cd execution/reddit_analyzer
-        uv run send_email.py
+  commit-db:
+    # Commit the updated DB after collection (independent of analysis)
+    needs: collect-data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download Database Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: reddit-db
+          path: execution/reddit_analyzer/
 
-    - name: Commit and Push Database Update
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "Auto: Update reddit database"
-        file_pattern: "execution/reddit_analyzer/reddit_ideas.db"
+      - name: Commit and Push Database Update
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto: Update reddit database"
+          file_pattern: "execution/reddit_analyzer/reddit_ideas.db"

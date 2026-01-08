@@ -1,12 +1,12 @@
 import os
 import sqlite3
 import json
+import argparse
 from datetime import datetime, timedelta
 import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables from the root .env
-# Structure is execution/reddit_analyzer/analyze_ideas.py -> .env is two levels up
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
 load_dotenv(dotenv_path)
 
@@ -27,29 +27,41 @@ DB_NAME = os.path.join(os.path.dirname(__file__), config['db_name'])
 import time
 from google.api_core import exceptions
 
-def get_recent_posts(hours=24, limit=20):
+def get_recent_posts(hours=24, limit=20, category=None):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     
     # Calculate cutoff time
     cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
     
-    # Select posts fetched recently
-    query = '''
-        SELECT title, summary, subreddit, link 
-        FROM posts 
-        WHERE fetched_at > ? 
-        ORDER BY fetched_at DESC 
-        LIMIT ?
-    '''
-    c.execute(query, (cutoff, limit))
+    # Define subreddits filter
+    target_subreddits = []
+    if category:
+        if 'categories' in config and category in config['categories']:
+            target_subreddits = config['categories'][category]['subreddits']
+        else:
+            print(f"Warning: Category '{category}' not found in config.")
+            return []
+    
+    query = 'SELECT title, summary, subreddit, link FROM posts WHERE fetched_at > ?'
+    params = [cutoff]
+    
+    if target_subreddits:
+        placeholders = ','.join('?' for _ in target_subreddits)
+        query += f' AND subreddit IN ({placeholders})'
+        params.extend(target_subreddits)
+        
+    query += ' ORDER BY fetched_at DESC LIMIT ?'
+    params.append(limit)
+    
+    c.execute(query, tuple(params))
     posts = c.fetchall()
     conn.close()
     return posts
 
-def analyze_posts(posts):
+def analyze_posts(posts, category_name="Général"):
     if not posts:
-        return "No recent posts found to analyze."
+        return f"Aucun post récent trouvé pour la catégorie {category_name}."
 
     # Construct Prompt
     posts_text = ""
@@ -59,16 +71,16 @@ def analyze_posts(posts):
         posts_text += f"- [{sub}] {title}\n  Summary: {summary[:150]}...\n  Link: {link}\n\n"
 
     prompt = f"""
-    Tu es un analyste commercial expert. Analyse les publications Reddit suivantes provenant de communautés liées au business.
+    Tu es un analyste commercial expert. Analyse les publications Reddit suivantes provenant de la catégorie '{category_name}'.
     Identifie 5 idées de business prometteuses, tendances ou problèmes ("pain points") que des entrepreneurs pourraient résoudre.
     
     Formate ta réponse sous forme de rapport Markdown en FRANÇAIS. 
     IMPORTANT : N'utilise PAS de tableau pour les idées. Utilise le format suivant pour une lisibilité maximale :
 
-    # Rapport d'Idées Business
+    # Rapport d'Idées Business : {category_name}
 
     ## 📊 Résumé Exécutif
-    Un aperçu de 2 phrases sur le sentiment actuel du marché.
+    Un aperçu de 2 phrases sur le sentiment actuel dans cette niche.
 
     ## 🚀 Top 5 Opportunités
 
@@ -104,17 +116,24 @@ def analyze_posts(posts):
     return "Analysis failed after retries due to quota limits."
 
 def main():
-    print("Fetching recent posts...")
-    posts = get_recent_posts(hours=24)
+    parser = argparse.ArgumentParser(description='Analyze Reddit posts for business ideas.')
+    parser.add_argument('--category', type=str, help='Category name from config.json to analyze')
+    args = parser.parse_args()
+
+    print(f"Fetching recent posts for category: {args.category if args.category else 'ALL'}...")
+    posts = get_recent_posts(hours=24, category=args.category)
     print(f"Found {len(posts)} posts. Analyzing with Gemini...")
     
-    analysis = analyze_posts(posts)
+    cat_display_name = args.category if args.category else "Business Général"
+    analysis = analyze_posts(posts, category_name=cat_display_name)
     
     print("\n--- ANALYSIS REPORT ---\n")
     print(analysis)
     
-    # Save to a temporary file for the next step (emailing)
-    output_path = os.path.join(os.path.dirname(__file__), 'latest_analysis.md')
+    # Save to a temporary file specific to the category
+    filename = f"latest_analysis_{args.category}.md" if args.category else "latest_analysis.md"
+    output_path = os.path.join(os.path.dirname(__file__), filename)
+    
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(analysis)
     print(f"\nAnalysis saved to {output_path}")
