@@ -1,4 +1,4 @@
-name: Daily Business Ideas
+name: Daily_Business_Ideas_Workflow
 
 on:
   schedule:
