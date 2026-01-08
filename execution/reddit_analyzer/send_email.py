@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+from datetime import datetime
 from email.mime.text import MIMEText
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -82,11 +83,13 @@ def main():
         return
 
     print(f"Sending email to {RECIPIENT_EMAIL}...")
+    current_date = datetime.now().strftime("%d/%m/%Y")
+    subject = f"[REDDIT] Idées Business Du Jour : {current_date}"
     send_message(
         service, 
         "me", 
         RECIPIENT_EMAIL, 
-        "Daily Reddit Business Ideas", 
+        subject, 
         f"<html><body>{html_content}</body></html>"
     )
 

@@ -59,17 +59,17 @@ def analyze_posts(posts):
         posts_text += f"- [{sub}] {title}\n  Summary: {summary[:150]}...\n  Link: {link}\n\n"
 
     prompt = f"""
-    You are a business analyst. Analyze the following Reddit posts from business-related communities.
-    Identify 5 promising business ideas, trends, or pain points that entrepreneurs could solve.
+    Tu es un analyste commercial expert. Analyse les publications Reddit suivantes provenant de communautés liées au business.
+    Identifie 5 idées de business prometteuses, tendances ou problèmes ("pain points") que des entrepreneurs pourraient résoudre.
     
-    Format your response as a Markdown report with:
-    1. **Executive Summary**: A 2-sentence overview of the current sentiment.
-    2. **Top 5 Opportunities**: Numbered list. For each, provide:
-       - **Idea/Trend Name**
-       - **The Problem/Insight** (Cite the specific reddit post context)
-       - **Proposed Solution/Product**
+    Formate ta réponse sous forme de rapport Markdown en FRANÇAIS avec :
+    1. **Résumé Exécutif** : Un aperçu de 2 phrases sur le sentiment actuel.
+    2. **Top 5 Opportunités** : Liste numérotée. Pour chacune, fournis :
+       - **Nom de l'Idée/Tendance**
+       - **Le Problème/Insight** (Cite le contexte spécifique du post reddit)
+       - **Solution/Produit Proposé**
     
-    Here is the data:
+    Voici les données :
     {posts_text}
     """
 
