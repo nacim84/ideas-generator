@@ -62,14 +62,27 @@ def analyze_posts(posts):
     Tu es un analyste commercial expert. Analyse les publications Reddit suivantes provenant de communautés liées au business.
     Identifie 5 idées de business prometteuses, tendances ou problèmes ("pain points") que des entrepreneurs pourraient résoudre.
     
-    Formate ta réponse sous forme de rapport Markdown en FRANÇAIS avec :
-    1. **Résumé Exécutif** : Un aperçu de 2 phrases sur le sentiment actuel.
-    2. **Top 5 Opportunités** : Liste numérotée. Pour chacune, fournis :
-       - **Nom de l'Idée/Tendance**
-       - **Le Problème/Insight** (Cite le contexte spécifique du post reddit)
-       - **Solution/Produit Proposé**
+    Formate ta réponse sous forme de rapport Markdown en FRANÇAIS. 
+    IMPORTANT : N'utilise PAS de tableau pour les idées. Utilise le format suivant pour une lisibilité maximale :
+
+    # Rapport d'Idées Business
+
+    ## 📊 Résumé Exécutif
+    Un aperçu de 2 phrases sur le sentiment actuel du marché.
+
+    ## 🚀 Top 5 Opportunités
+
+    ### 1. [Nom de l'Idée/Tendance]
+    **🧐 Le Problème / Insight :**
+    [Description du problème. Cite le contexte spécifique du post reddit ici]
+
+    **💡 Solution / Produit Proposé :**
+    [Description concrète de la solution]
+
+    ---
+    (Répète pour les idées 2 à 5)
     
-    Voici les données :
+    Voici les données à analyser :
     {posts_text}
     """
 
