@@ -23,12 +23,12 @@ jobs:
         python-version: '3.11'
 
     - name: Install uv
-      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      uses: astral-sh/setup-uv@v5
 
     - name: Install dependencies
       run: |
         cd execution/reddit_analyzer
-        ~/.cargo/bin/uv sync --frozen || ~/.cargo/bin/uv sync
+        uv sync --frozen || uv sync
 
     - name: Create configuration files from Secrets
       run: |
@@ -45,17 +45,17 @@ jobs:
     - name: Collect Reddit Posts
       run: |
         cd execution/reddit_analyzer
-        ~/.cargo/bin/uv run collector.py
+        uv run collector.py
 
     - name: Analyze Ideas with Gemini
       run: |
         cd execution/reddit_analyzer
-        ~/.cargo/bin/uv run analyze_ideas.py
+        uv run analyze_ideas.py
 
     - name: Send Email Report
       run: |
         cd execution/reddit_analyzer
-        ~/.cargo/bin/uv run send_email.py
+        uv run send_email.py
 
     - name: Commit and Push Database Update
       uses: stefanzweifel/git-auto-commit-action@v5
