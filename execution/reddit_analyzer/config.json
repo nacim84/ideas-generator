@@ -1,0 +1,10 @@
+{
+    "subreddits": [
+        "business",
+        "entrepreneur",
+        "startups",
+        "smallbusiness",
+        "sideproject"
+    ],
+    "db_name": "reddit_ideas.db"
+}
