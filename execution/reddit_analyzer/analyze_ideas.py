@@ -37,10 +37,14 @@ def get_recent_posts(hours=24, limit=20, category=None):
     # Define subreddits filter
     target_subreddits = []
     if category:
-        if 'categories' in config and category in config['categories']:
-            target_subreddits = config['categories'][category]['subreddits']
-        else:
-            print(f"Warning: Category '{category}' not found in config.")
+        if 'subreddits' in config:
+            target_subreddits = [
+                s['name'] for s in config['subreddits'] 
+                if isinstance(s, dict) and s.get('category') == category
+            ]
+        
+        if not target_subreddits:
+            print(f"Warning: No subreddits found for category '{category}'.")
             return []
     
     query = 'SELECT title, summary, subreddit, link FROM posts WHERE fetched_at > ?'

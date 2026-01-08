@@ -78,16 +78,17 @@ def save_posts(conn, posts):
 def main():
     conn = init_db()
     
-    # Extract unique subreddits from all categories
+    # Extract unique subreddits from the new object list structure
     target_subreddits = set()
-    if 'subreddits' in config: # Backward compatibility
-        target_subreddits.update(config['subreddits'])
-    
-    if 'categories' in config:
-        for cat_data in config['categories'].values():
-            target_subreddits.update(cat_data.get('subreddits', []))
+    if 'subreddits' in config:
+        for sub_entry in config['subreddits']:
+            if isinstance(sub_entry, dict):
+                target_subreddits.add(sub_entry.get('name'))
+            else:
+                target_subreddits.add(sub_entry) # Fallback for simple strings
 
     for sub in target_subreddits:
+        if not sub: continue
         posts = collect_feed(sub)
         if posts:
             save_posts(conn, posts)

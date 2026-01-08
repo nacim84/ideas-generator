@@ -21,8 +21,8 @@ jobs:
       - name: Extract Categories from Config
         id: set-matrix
         run: |
-          # Read config.json and extract keys from "categories" object
-          CATEGORIES=$(jq -c '[.categories | keys[]]' execution/reddit_analyzer/config.json)
+          # Extract unique categories from the subreddits list
+          CATEGORIES=$(jq -c '[.subreddits[].category] | unique' execution/reddit_analyzer/config.json)
           echo "Found categories: $CATEGORIES"
           echo "categories=$CATEGORIES" >> $GITHUB_OUTPUT
 

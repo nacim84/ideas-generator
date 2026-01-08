@@ -1,25 +1,113 @@
 {
-    "categories": {
-        "General_Business": {
-            "subreddits": ["business", "smallbusiness", "Entrepreneur"],
-            "weight": 1.0
-        },
-        "Tech_Startups": {
-            "subreddits": ["startups", "sideproject", "SaaS", "software"],
-            "weight": 1.0
-        },
-        "Marketing_Sales": {
-            "subreddits": ["marketing", "sales", "socialmedia", "growthhacking"],
-            "weight": 0.8
-        },
-        "Finance_Investing": {
-            "subreddits": ["investing", "stocks", "financialindependence", "SecurityAnalysis"],
-            "weight": 0.7
-        },
-        "AI_Tech": {
-            "subreddits": ["ArtificialInteligence", "MachineLearning", "technology", "ChatGPT"],
-            "weight": 0.9
-        }
+  "subreddits": [
+    {
+      "name": "SomebodyMakeThis",
+      "category": "DIRECT_DEMAND",
+      "weight": 10,
+      "description": "Utilisateurs décrivant explicitement des produits qu'ils souhaitent acheter."
     },
-    "db_name": "reddit_ideas.db"
+    {
+      "name": "RequestABot",
+      "category": "DIRECT_DEMAND",
+      "weight": 9,
+      "description": "Demandes d'automatisation spécifiques. Idéal pour des idées de Micro-SaaS."
+    },
+    {
+      "name": "AppIdeas",
+      "category": "DIRECT_DEMAND",
+      "weight": 8,
+      "description": "Brainstorming d'applications. Beaucoup de bruit, mais quelques pépites."
+    },
+    {
+      "name": "SaaS",
+      "category": "B2B_MARKET",
+      "weight": 9,
+      "description": "Discussions entre fondateurs. Idéal pour voir les tendances et les outils manquant."
+    },
+    {
+      "name": "MicroSaaS",
+      "category": "B2B_MARKET",
+      "weight": 9,
+      "description": "Focus sur les petits produits de niche rentables par une seule personne."
+    },
+    {
+      "name": "SmallBusiness",
+      "category": "PAIN_POINTS",
+      "weight": 9,
+      "description": "Propriétaires de PME discutant de leurs problèmes réels (compta, RH, logistique)."
+    },
+    {
+      "name": "Entrepreneur",
+      "category": "B2B_MARKET",
+      "weight": 7,
+      "description": "Généraliste, mais utile pour repérer les questions récurrentes des débutants."
+    },
+    {
+      "name": "SideProject",
+      "category": "MARKET_VALIDATION",
+      "weight": 7,
+      "description": "Présentation de projets. Utile pour analyser ce qui existe déjà."
+    },
+    {
+      "name": "Marketing",
+      "category": "PAIN_POINTS",
+      "weight": 7,
+      "description": "Professionnels cherchant des outils pour automatiser leur travail."
+    },
+    {
+      "name": "Sales",
+      "category": "PAIN_POINTS",
+      "weight": 7,
+      "description": "Les commerciaux ont du budget. Regarder leurs plaintes sur les CRM/outils."
+    },
+    {
+      "name": "RemoteWork",
+      "category": "TRENDS",
+      "weight": 8,
+      "description": "Tendance lourde. Recherche d'outils de collaboration et productivité."
+    },
+    {
+      "name": "ArtificialIntelligence",
+      "category": "TECH_TRENDS",
+      "weight": 6,
+      "description": "Pour suivre la hype et voir ce que les gens essaient de construire."
+    },
+    {
+      "name": "LocalLLaMA",
+      "category": "TECH_TRENDS",
+      "weight": 8,
+      "description": "Avant-garde de l'IA Open Source. Idées techniques avancées."
+    },
+    {
+      "name": "DataIsBeautiful",
+      "category": "INSPIRATION",
+      "weight": 5,
+      "description": "Inspiration pour des dashboards ou des outils de visualisation."
+    },
+    {
+      "name": "InternetIsBeautiful",
+      "category": "INSPIRATION",
+      "weight": 5,
+      "description": "Outils web créatifs qui buzzent."
+    },
+    {
+      "name": "Productivity",
+      "category": "B2C_LIFESTYLE",
+      "weight": 6,
+      "description": "Gens cherchant à optimiser leur vie. Marché saturé mais demande constante."
+    },
+    {
+      "name": "PersonalFinance",
+      "category": "FINTECH",
+      "weight": 6,
+      "description": "Problèmes de budget et d'investissement."
+    },
+    {
+      "name": "Excel",
+      "category": "PAIN_POINTS",
+      "weight": 6,
+      "description": "Si une tâche Excel est trop complexe, elle mérite peut-être un logiciel dédié."
+    }
+  ],
+  "db_name": "reddit_ideas.db"
 }
