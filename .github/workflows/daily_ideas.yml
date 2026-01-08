@@ -1,0 +1,64 @@
+name: Daily Business Ideas
+
+on:
+  schedule:
+    # Runs at 08:00 UTC every day
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  generate-ideas:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Install dependencies
+      run: |
+        cd execution/reddit_analyzer
+        ~/.cargo/bin/uv sync --frozen || ~/.cargo/bin/uv sync
+
+    - name: Create configuration files from Secrets
+      run: |
+        # Create .env
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+        echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> .env
+        
+        # Create credentials.json
+        echo '${{ secrets.GMAIL_CREDENTIALS_JSON }}' > credentials.json
+        
+        # Create token.json (This is crucial for skipping manual login)
+        echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
+
+    - name: Collect Reddit Posts
+      run: |
+        cd execution/reddit_analyzer
+        ~/.cargo/bin/uv run collector.py
+
+    - name: Analyze Ideas with Gemini
+      run: |
+        cd execution/reddit_analyzer
+        ~/.cargo/bin/uv run analyze_ideas.py
+
+    - name: Send Email Report
+      run: |
+        cd execution/reddit_analyzer
+        ~/.cargo/bin/uv run send_email.py
+
+    - name: Commit and Push Database Update
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Auto: Update reddit database"
+        file_pattern: "execution/reddit_analyzer/reddit_ideas.db"
