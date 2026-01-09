@@ -2,8 +2,8 @@ name: Daily_Business_Ideas_Workflow
 
 on:
   schedule:
-    # Runs at 08:00 UTC every day
-    - cron: '0 8 * * *'
+    # Runs at 08:00 UTC every day (France timezone UTC+1/UTC+2)
+    - cron: "0 7 * * *"
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Extract Categories from Config
         id: set-matrix
         run: |
@@ -36,8 +36,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
@@ -45,7 +45,7 @@ jobs:
         run: |
           cd execution/reddit_analyzer
           uv sync --frozen || uv sync
-      
+
       - name: Collect Reddit Posts
         run: |
           cd execution/reddit_analyzer
@@ -67,49 +67,49 @@ jobs:
       fail-fast: false # If one category fails, others continue
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: |
-        cd execution/reddit_analyzer
-        uv sync --frozen || uv sync
+      - name: Install dependencies
+        run: |
+          cd execution/reddit_analyzer
+          uv sync --frozen || uv sync
 
-    - name: Download Database Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: reddit-db
-        path: execution/reddit_analyzer/
+      - name: Download Database Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: reddit-db
+          path: execution/reddit_analyzer/
 
-    - name: Create configuration files from Secrets
-      run: |
-        # Create .env
-        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
-        echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> .env
-        
-        # Create credentials.json
-        echo '${{ secrets.GMAIL_CREDENTIALS_JSON }}' > credentials.json
-        
-        # Create token.json (This is crucial for skipping manual login)
-        echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
+      - name: Create configuration files from Secrets
+        run: |
+          # Create .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> .env
 
-    - name: Analyze Ideas for ${{ matrix.category }}
-      run: |
-        cd execution/reddit_analyzer
-        uv run analyze_ideas.py --category "${{ matrix.category }}"
+          # Create credentials.json
+          echo '${{ secrets.GMAIL_CREDENTIALS_JSON }}' > credentials.json
 
-    - name: Send Email Report for ${{ matrix.category }}
-      run: |
-        cd execution/reddit_analyzer
-        uv run send_email.py --category "${{ matrix.category }}"
+          # Create token.json (This is crucial for skipping manual login)
+          echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
+
+      - name: Analyze Ideas for ${{ matrix.category }}
+        run: |
+          cd execution/reddit_analyzer
+          uv run analyze_ideas.py --category "${{ matrix.category }}"
+
+      - name: Send Email Report for ${{ matrix.category }}
+        run: |
+          cd execution/reddit_analyzer
+          uv run send_email.py --category "${{ matrix.category }}"
 
   commit-db:
     # Commit the updated DB after collection (independent of analysis)
@@ -118,7 +118,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Download Database Artifact
         uses: actions/download-artifact@v4
         with:
