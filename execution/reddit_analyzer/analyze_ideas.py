@@ -18,7 +18,7 @@ if not GEMINI_API_KEY:
     print("Error: GEMINI_API_KEY not found in .env")
     exit(1)
 
-LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3-flash")
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3-flash-preview")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
