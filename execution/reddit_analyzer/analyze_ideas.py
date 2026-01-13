@@ -102,7 +102,7 @@ def analyze_posts(posts, category_name="Général"):
     {posts_text}
     """
 
-    model = genai.GenerativeModel('gemini-flash-latest')
+    model = genai.GenerativeModel('gemini-3-flash')
     
     # Simple retry logic
     max_retries = 3
