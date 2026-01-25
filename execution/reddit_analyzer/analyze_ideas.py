@@ -13,14 +13,14 @@ dotenv_path = os.path.join(
 )
 load_dotenv(dotenv_path)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("Error: GEMINI_API_KEY not found in .env")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    print("Error: GOOGLE_API_KEY not found in .env")
     exit(1)
 
-LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3-flash-preview")
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-3-flash-preview")
 
-genai.configure(api_key=GEMINI_API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
 
 # Config
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
@@ -113,7 +113,7 @@ def analyze_posts(posts, category_name="Général"):
     {posts_text}
     """
 
-    model = genai.GenerativeModel(LLM_MODEL_NAME)
+    model = genai.GenerativeModel(GOOGLE_MODEL)
 
     # Simple retry logic
     max_retries = 3

@@ -12,6 +12,7 @@ Ce projet surveille en continu des communautés ciblées sur Reddit (SaaS, Entre
 - **🧠 Analyse IA Avancée :** Utilise Google Gemini (Flash) pour synthétiser des centaines de posts en idées business actionnables.
 - **📂 Segmentation Intelligente :** Classe les rapports par catégories (ex: *Tech Startups*, *B2B Market*, *Direct Demand*) pour une lecture ciblée.
 - **📧 Rapports Quotidiens :** Envoi automatique d'emails formatés en HTML avec un résumé exécutif et le top 5 des opportunités du jour.
+- **🎙️ Production de Podcasts :** Génère automatiquement des épisodes de podcast audio (qualité studio) à partir des analyses, avec plusieurs voix, musique et post-production.
 - **⚡ Architecture CI/CD :** Entièrement automatisé via GitHub Actions avec exécution parallèle des catégories (Matrix Strategy).
 - **🇫🇷 Localisation :** Rapports générés et formatés en Français.
 
@@ -33,6 +34,7 @@ Ce projet suit une **architecture à 3 couches** pour maximiser la fiabilité et
 - **Python 3.11+**
 - **[uv](https://docs.astral.sh/uv/)** (Gestionnaire de paquets Python ultra-rapide)
 - Un compte **Google Cloud** (pour l'API Gemini et Gmail)
+- Un compte **OpenAI** (pour l'API TTS)
 
 ### 1. Clonage et Dépendances
 ```bash
@@ -45,6 +47,7 @@ uv sync
 Créez un fichier `.env` à la racine du projet :
 ```ini
 GEMINI_API_KEY=votre_cle_api_gemini
+OPENAI_API_KEY=votre_cle_api_openai
 RECIPIENT_EMAIL=votre_email@destinataire.com
 ```
 
@@ -100,9 +103,29 @@ Placez-vous dans `execution/reddit_analyzer/` :
     uv run send_email.py --category "B2B_MARKET"
     ```
 
+### Mode Podcast (Local)
+Le système peut générer un podcast audio à partir des idées analysées. La configuration avancée se trouve dans `podcast_config_advanced.json`.
+
+1.  **Générer le script du podcast :**
+    ```bash
+    uv run generate_podcast_script.py --category "B2B_MARKET"
+    ```
+2.  **Segmenter le script pour le TTS :**
+    ```bash
+    uv run semantic_segmentation.py --script "scripts/podcast_script_B2B_MARKET_YYYYMMDD.json"
+    ```
+3.  **Synthétiser les segments audio :**
+    ```bash
+    uv run synthesize_podcast_audio.py --segments "segments_B2B_MARKET_YYYYMMDD.json"
+    ```
+4.  **Post-production et mixage final :**
+    ```bash
+    uv run audio_postproduction.py --raw-audio "audio/raw/" --output "episodes/"
+    ```
+
 ### Mode Automatique (GitHub Actions)
 Le workflow `.github/workflows/daily_ideas.yml` s'exécute **tous les jours à 08:00 UTC**.
-Il détecte automatiquement les catégories présentes dans `config.json` et lance des jobs parallèles pour analyser et envoyer les rapports.
+Il détecte automatiquement les catégories présentes dans `config.json` et lance des jobs parallèles pour analyser, envoyer les rapports et générer les podcasts.
 
 ---
 
@@ -115,9 +138,13 @@ Il détecte automatiquement les catégories présentes dans `config.json` et lan
 ├── execution/
 │   └── reddit_analyzer/ # Le code source Python
 │       ├── config.json  # Configuration des sources
+│       ├── podcast_config_advanced.json # Configuration avancée du podcast
 │       ├── main.py      # Point d'entrée
 │       ├── collector.py # Scraper RSS Reddit
 │       ├── analyze_ideas.py # Moteur IA (Gemini)
+│       ├── generate_podcast_script.py # Générateur de scénario podcast
+│       ├── synthesize_podcast_audio.py # Moteur TTS
+│       ├── audio_postproduction.py # Mixage et mastering audio
 │       └── send_email.py # Gestionnaire d'envoi SMTP/Gmail
 └── README.md
 ```

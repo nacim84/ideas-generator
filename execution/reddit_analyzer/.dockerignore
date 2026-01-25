@@ -1,0 +1,43 @@
+# Ignore virtual environments
+.venv
+venv
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
+
+# Ignore local development files
+.env
+.DS_Store
+
+# Ignore test reports and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore user-uploaded credentials
+credentials.json
+token.json
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore local database
+reddit_ideas.db
+*.db-journal
+
+# Ignore media files - they should be generated inside the container
+/audio/
+/episodes/
+/scripts/
+/segments/
+/latest_analysis*
+/audio_manifests/

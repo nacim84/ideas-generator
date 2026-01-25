@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./execution/reddit_analyzer
+      dockerfile: Dockerfile
+    container_name: ideas_generator_app
+    volumes:
+      # Mount the code for local development
+      - ./execution/reddit_analyzer:/app
+      # Persist the generated media files
+      - ./execution/reddit_analyzer/audio:/app/audio
+      - ./execution/reddit_analyzer/episodes:/app/episodes
+      - ./execution/reddit_analyzer/scripts:/app/scripts
+      - ./execution/reddit_analyzer/segments:/app/segments
+      - ./execution/reddit_analyzer/latest_analysis:/app/latest_analysis
+      # Persist the database
+      - ./execution/reddit_analyzer/reddit_ideas.db:/app/reddit_ideas.db
+      # Mount Google service account for Drive API
+      - ./execution/reddit_analyzer/secrets:/app/secrets
+    env_file:
+      - ./.env
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_MODEL=${GOOGLE_MODEL}
+      - GOOGLE_SERVICE_ACCOUNT_PATH=/app/secrets/service_account.json
+      - GOOGLE_DRIVE_PARENT_FOLDER_ID=${GOOGLE_DRIVE_PARENT_FOLDER_ID:-1mYgr0YXeF71rjoxLsHTLEC5LL67Nbf48}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - RECIPIENT_EMAIL=${RECIPIENT_EMAIL}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    # Keep the service running
+    command: tail -f /dev/null

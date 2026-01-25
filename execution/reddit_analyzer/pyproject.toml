@@ -3,7 +3,7 @@ name = "reddit-analyzer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "feedparser>=6.0.12",
     "google-generativeai",
@@ -12,4 +12,15 @@ dependencies = [
     "google-auth-oauthlib",
     "python-dotenv",
     "markdown",
+    "langchain",
+    "langgraph",
+    "gitpython",
+    "openai>=1.0.0",
+    "pydub>=0.25.1",
+    "nltk>=3.8.1",
+    "librosa>=0.10.0",
+    "soundfile>=0.12.1",
+    "numpy>=1.24.0",
+    "requests>=2.31.0",
+    "tqdm>=4.65.0",
 ]
