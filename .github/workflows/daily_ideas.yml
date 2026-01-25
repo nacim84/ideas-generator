@@ -83,6 +83,11 @@ jobs:
           cd execution/reddit_analyzer
           uv sync --frozen || uv sync
 
+      - name: Install audio dependencies
+        run: |
+          cd execution/reddit_analyzer
+          uv add -r requirements-audio.txt
+
       - name: Download Database Artifact
         uses: actions/download-artifact@v4
         with:
@@ -106,10 +111,34 @@ jobs:
           cd execution/reddit_analyzer
           uv run analyze_ideas.py --category "${{ matrix.category }}"
 
-      - name: Send Email Report for ${{ matrix.category }}
-        run: |
-          cd execution/reddit_analyzer
-          uv run send_email.py --category "${{ matrix.category }}"
+       - name: Send Email Report for ${{ matrix.category }}
+         run: |
+           cd execution/reddit_analyzer
+           uv run send_email.py --category "${{ matrix.category }}"
+
+       - name: Generate Podcast Script for ${{ matrix.category }}
+         run: |
+           cd execution/reddit_analyzer
+           uv run generate_podcast_script.py --category "${{ matrix.category }}"
+
+       - name: Semantic Segmentation
+         run: |
+           cd execution/reddit_analyzer
+           uv run semantic_segmentation.py --script "scripts/podcast_script_${{ matrix.category }}_$(date +%Y%m%d).json"
+
+       - name: Generate Podcast Audio for ${{ matrix.category }}
+         if: env.OPENAI_API_KEY != ''
+         env:
+           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+         run: |
+           cd execution/reddit_analyzer
+           uv run synthesize_podcast_audio.py --segments "segments_${{ matrix.category }}_$(date +%Y%m%d).json"
+
+       - name: Create Podcast Episode for ${{ matrix.category }}
+         if: env.OPENAI_API_KEY != ''
+         run: |
+           cd execution/reddit_analyzer
+          uv run audio_postproduction.py --raw-audio "audio/raw/" --output "episodes/"
 
   commit-db:
     # Commit the updated DB after collection (independent of analysis)

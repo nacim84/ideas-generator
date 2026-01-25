@@ -1,0 +1,67 @@
+{
+  "tts_settings": {
+    "model": "tts-1-hd",
+    "max_chars_per_segment": 4000,
+    "sample_rate": 24000,
+    "audio_format": "mp3"
+  },
+  "multi_speaker": {
+    "HOST": {
+      "voice": "onyx",
+      "description": "Voix masculine, profonde, autoritaire pour l'animateur principal",
+      "emotion": "professional_calm"
+    },
+    "EXPERT": {
+      "voice": "shimmer", 
+      "description": "Voix féminine, claire, dynamique pour les analyses expertes",
+      "emotion": "enthusiastic"
+    },
+    "GUEST": {
+      "voice": "nova",
+      "description": "Voix neutre pour les citations et témoignages",
+      "emotion": "conversational"
+    }
+  },
+  "audio_production": {
+    "background_music": {
+      "intro_volume": -6,
+      "body_volume": -15,
+      "outro_volume": -6,
+      "ducking_level": -15
+    },
+    "effects": {
+      "intro_duration": 5000,
+      "outro_duration": 5000,
+      "crossfade_duration": 2000,
+      "compressor_threshold": -18
+    },
+    "mastering": {
+      "target_loudness": -16,
+      "eq_low_cut": 80,
+      "eq_high_cut": 16000
+    }
+  },
+  "content_strategy": {
+    "max_episode_duration": 600,
+    "segments": {
+      "intro": 0.08,
+      "main_content": 0.80,
+      "conclusion": 0.12
+    },
+    "text_normalization": {
+      "SaaS": "sass",
+      "Q3": "Q three",
+      "Q4": "Q four",
+      "EBITDA": "E-BIT-DA",
+      "YoY": "year over year",
+      "B2B": "B to B",
+      "B2C": "B to C",
+      "AI": "artificial intelligence",
+      "API": "A P I",
+      "CRM": "C R M",
+      "SQL": "S Q L",
+      "$10M": "ten million dollars",
+      "$1B": "one billion dollars"
+    }
+  }
+}
