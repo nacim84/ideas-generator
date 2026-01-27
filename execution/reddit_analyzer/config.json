@@ -109,5 +109,13 @@
       "description": "Si une tâche Excel est trop complexe, elle mérite peut-être un logiciel dédié."
     }
   ],
-  "db_name": "reddit_ideas.db"
+  "db_name": "reddit_ideas.db",
+  "reddit_image_settings": {
+    "enabled": true,
+    "model": "imagen-3.0-generate-001",
+    "aspect_ratio": "1:1",
+    "output_dir": "reddit_images",
+    "max_images_per_post": 1,
+    "quality": "high"
+  }
 }

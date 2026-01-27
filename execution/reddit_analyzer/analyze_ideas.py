@@ -33,6 +33,171 @@ import time
 
 from google.api_core import exceptions
 
+# Import Reddit image generation components
+try:
+    from .tools.reddit_image_generator import generate_reddit_visual
+    from .utils.file_manager import RedditImageFileManager
+except ImportError:
+    generate_reddit_visual = None
+    RedditImageFileManager = None
+
+
+class RedditAnalyzerWithImages:
+    """Analyseur Reddit avec génération d'images intégrée."""
+
+    def __init__(self):
+        self.file_manager = RedditImageFileManager() if RedditImageFileManager else None
+        self.image_config = self._load_image_config()
+
+    def _load_image_config(self) -> dict:
+        """Charge la configuration de génération d'images."""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                return config.get("reddit_image_settings", {})
+        except:
+            return {}
+
+    def analyze_and_generate_images(self, category: str) -> dict:
+        """Analyse les idées et génère des images associées."""
+
+        # Analyse existante
+        posts = get_recent_posts(hours=24, category=category)
+        if not posts:
+            return {
+                "ideas": [],
+                "error": f"Aucun post trouvé pour la catégorie {category}",
+            }
+
+        # Analyse des posts
+        analysis_text = analyze_posts(posts, category_name=category)
+
+        # Parser l'analyse pour extraire les idées
+        ideas = self._parse_analysis_for_images(analysis_text)
+
+        # Vérifier si la génération d'images est activée
+        if not self.image_config.get("enabled", True) or not generate_reddit_visual:
+            return {"ideas": ideas, "analysis": analysis_text}
+
+        # Générer des images pour les idées pertinentes
+        for idea in ideas:
+            if self._should_generate_image(idea):
+                prompt = self._create_image_prompt(idea, category)
+                try:
+                    image_path = generate_reddit_visual(prompt)
+                    idea["generated_image"] = image_path
+                except Exception as e:
+                    print(
+                        f"Erreur lors de la génération d'image pour l'idée '{idea.get('title', 'Unknown')}': {e}"
+                    )
+
+        return {"ideas": ideas, "analysis": analysis_text}
+
+    def _parse_analysis_for_images(self, analysis_text: str) -> list:
+        """Extrait les idées de l'analyse textuelle."""
+        ideas = []
+
+        # Simple parsing - chercher les sections d'idées
+        lines = analysis_text.split("\n")
+        current_idea = {}
+
+        for line in lines:
+            line = line.strip()
+
+            # Détecter le début d'une nouvelle idée
+            if line.startswith("### ") and not line.startswith("### Top"):
+                if current_idea:
+                    ideas.append(current_idea)
+
+                title = line.replace("### ", "").strip()
+                current_idea = {
+                    "title": title,
+                    "problem": "",
+                    "solution": "",
+                    "needs_visualization": True,
+                }
+
+            # Extraire le problème
+            elif line.startswith("**🧐 Le Problème / Insight :**"):
+                problem_lines = []
+                i = lines.index(line) + 1
+                while i < len(lines) and not lines[i].strip().startswith("**💡"):
+                    problem_lines.append(lines[i].strip())
+                    i += 1
+
+                current_idea["problem"] = " ".join(problem_lines).strip()
+
+            # Extraire la solution
+            elif line.startswith("**💡 Solution / Produit Proposé :**"):
+                solution_lines = []
+                i = lines.index(line) + 1
+                while i < len(lines) and (
+                    not lines[i].strip() or not lines[i].strip().startswith("---")
+                ):
+                    if lines[i].strip():
+                        solution_lines.append(lines[i].strip())
+                    i += 1
+
+                current_idea["solution"] = " ".join(solution_lines).strip()
+
+        if current_idea:
+            ideas.append(current_idea)
+
+        return ideas
+
+    def _should_generate_image(self, idea: dict) -> bool:
+        """Détermine si une idée mérite une image générée."""
+        # Critères basés sur le contenu
+        title = idea.get("title", "").lower()
+        problem = idea.get("problem", "").lower()
+        solution = idea.get("solution", "").lower()
+
+        # Générer une image si l'idée semble pertinente
+        has_business_keywords = any(
+            keyword in title or keyword in problem or keyword in solution
+            for keyword in [
+                "app",
+                "software",
+                "tool",
+                "platform",
+                "service",
+                "saas",
+                "business",
+            ]
+        )
+
+        return has_business_keywords and (len(problem) > 10 or len(solution) > 10)
+
+    def _create_image_prompt(self, idea: dict, category: str) -> str:
+        """Crée un prompt d'image basé sur l'idée Reddit."""
+        title = idea.get("title", "")
+        problem = idea.get("problem", "")
+        solution = idea.get("solution", "")
+
+        prompt_template = """
+        Professional visualization for Reddit post: "{title}"
+        
+        Category: {category}
+        Problem: {problem}
+        Solution: {solution}
+        
+        Create a modern, clean visual representation that captures the essence of this business/concept.
+        Use professional business imagery with colors appropriate for {category}.
+        Include visual metaphors that represent the core idea.
+        
+        Style: Modern business infographic with clean lines
+        Colors: Professional palette matching {category} theme
+        Composition: Balanced and visually appealing
+        """
+
+        return prompt_template.format(
+            title=title,
+            category=category,
+            problem=problem[:100],
+            solution=solution[:100],
+        ).strip()
+
 
 def get_recent_posts(hours=24, limit=20, category=None):
     conn = sqlite3.connect(DB_NAME)

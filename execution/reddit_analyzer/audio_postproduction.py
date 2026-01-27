@@ -1,7 +1,9 @@
-import os
-import json
 import argparse
+import json
+import os
+from datetime import datetime
 from pathlib import Path
+
 from pydub import AudioSegment
 from pydub.effects import normalize
 
@@ -13,18 +15,15 @@ def load_config():
         return json.load(f)
 
 
-def load_audio_manifest(manifest_file):
-    """Load audio manifest from JSON file."""
-    with open(manifest_file, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def find_audio_files(raw_dir, audio_files):
-    """Find and load audio files from the manifest."""
+def find_audio_files(raw_dir):
+    """Find, sort, and load all audio files from a directory."""
     segments = []
 
-    for audio_file in audio_files:
-        file_path = raw_dir / audio_file
+    # Find all mp3 files and sort them numerically
+    audio_files = sorted(raw_dir.glob("segment_*.mp3"))
+
+    for file_path in audio_files:
+        audio_file = file_path.name
         if file_path.exists():
             try:
                 audio = AudioSegment.from_file(file_path)
@@ -41,7 +40,7 @@ def find_audio_files(raw_dir, audio_files):
 
 def apply_ducking(voice_track, background_music, ducking_level=-15):
     """
-    Mixe la voix et la musique en baissant la musique pendant la parole.
+    Mixe la voix et la musique en baissagnt la musique pendant la parole.
     """
     # Boucler la musique si elle est plus courte que la voix
     while len(background_music) < len(voice_track) + 5000:
@@ -163,20 +162,10 @@ def create_episode_audio(segments, config, output_file):
     return len(final_audio)
 
 
-def create_metadata_file(segments, config, output_file, episode_duration):
+def create_metadata_file(
+    segments, config, output_file, episode_duration, category, date
+):
     """Create metadata file for the episode."""
-    category = "unknown"
-    date = "unknown"
-
-    # Extract category and date from segments
-    if segments:
-        first_segment_file = segments[0]["file"]
-        if "segment_" in first_segment_file:
-            parts = first_segment_file.split("_")
-            if len(parts) >= 3:
-                category = parts[2]  # speaker part
-                date = parts[1] if len(parts) >= 4 else "unknown"
-
     metadata = {
         "title": f"Idées Business du {date} - {category}",
         "category": category,
@@ -191,9 +180,7 @@ def create_metadata_file(segments, config, output_file, episode_duration):
             {
                 "file": segment["file"],
                 "duration_ms": segment["duration"],
-                "speaker": segment["file"].split("_")[2]
-                if "_" in segment["file"]
-                else "unknown",
+                "speaker": "unknown",
             }
             for segment in segments
         ],
@@ -211,7 +198,9 @@ def main():
         description="Create final podcast episode from audio segments"
     )
     parser.add_argument(
-        "--raw-audio", required=True, help="Directory containing raw audio files"
+        "--raw-audio",
+        required=True,
+        help="Directory containing raw audio files (e.g., audio/raw/B2B_MARKET)",
     )
     parser.add_argument(
         "--output-dir", help="Output directory for episodes (default: episodes/)"
@@ -220,11 +209,8 @@ def main():
         "--output-file",
         help="Output episode file path (auto-generated if not specified)",
     )
-    parser.add_argument(
-        "--manifest", help="Audio manifest file path (auto-detected if not specified)"
-    )
 
-    args = argparse.parse_args()
+    args = parser.parse_args()
 
     # Load configuration
     try:
@@ -233,39 +219,15 @@ def main():
         print("Error: podcast_config_advanced.json not found")
         return 1
 
-    # Load audio manifest
-    if args.manifest:
-        manifest_file = Path(args.manifest)
-    else:
-        # Try to find manifest in raw audio directory
-        manifest_dir = Path(args.raw_audio).parent / "audio_manifests"
-        if manifest_dir.exists():
-            manifest_files = list(manifest_dir.glob("*.json"))
-            if manifest_files:
-                manifest_file = manifest_files[0]
-            else:
-                print("Error: No audio manifest file found")
-                return 1
-        else:
-            print("Error: No manifest specified and no manifest directory found")
-            return 1
-
-    try:
-        manifest_data = load_audio_manifest(manifest_file)
-        audio_files = manifest_data["audio_files"]
-    except Exception as e:
-        print(f"Error loading manifest: {e}")
-        return 1
-
     # Load audio files
     raw_dir = Path(args.raw_audio)
-    segments = find_audio_files(raw_dir, audio_files)
+    segments = find_audio_files(raw_dir)
 
     if not segments:
-        print("Error: No valid audio segments found")
+        print("Error: No valid audio segments found in the specified directory.")
         return 1
 
-    print(f"Loaded {len(segments)} audio segments")
+    print(f"Loaded {len(segments)} audio segments from {raw_dir}")
 
     # Generate output filename
     if args.output_file:
@@ -278,15 +240,8 @@ def main():
         )
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        category = "unknown"
-        date = "unknown"
-        if segments:
-            first_segment_file = segments[0]["file"]
-            if "segment_" in first_segment_file:
-                parts = first_segment_file.split("_")
-                if len(parts) >= 3:
-                    category = parts[2]
-                    date = parts[1] if len(parts) >= 4 else "unknown"
+        category = raw_dir.name
+        date = datetime.now().strftime("%Y%m%d")
 
         output_file = output_dir / f"episode_{category}_{date}.mp3"
 
@@ -294,7 +249,11 @@ def main():
     episode_duration = create_episode_audio(segments, config, output_file)
 
     # Create metadata
-    create_metadata_file(segments, config, output_file, episode_duration)
+    category = raw_dir.name
+    date = datetime.now().strftime("%Y%m%d")
+    create_metadata_file(
+        segments, config, output_file, episode_duration, category, date
+    )
 
     print(f"Post-production completed successfully!")
     print(f"Final episode: {output_file}")

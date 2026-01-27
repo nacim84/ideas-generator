@@ -94,17 +94,18 @@ jobs:
           name: reddit-db
           path: execution/reddit_analyzer/
 
-      - name: Create configuration files from Secrets
-        run: |
-          # Create .env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
-          echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> .env
+       - name: Create configuration files from Secrets
+         run: |
+           # Create .env
+           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+           echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> .env
+           echo "GOOGLE_GENERATIVEAI_API_KEY=${{ secrets.GOOGLE_GENERATIVEAI_API_KEY }}" >> .env
 
-          # Create credentials.json
-          echo '${{ secrets.GMAIL_CREDENTIALS_JSON }}' > credentials.json
+           # Create credentials.json
+           echo '${{ secrets.GMAIL_CREDENTIALS_JSON }}' > credentials.json
 
-          # Create token.json (This is crucial for skipping manual login)
-          echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
+           # Create token.json (This is crucial for skipping manual login)
+           echo '${{ secrets.GMAIL_TOKEN_JSON }}' > token.json
 
       - name: Analyze Ideas for ${{ matrix.category }}
         run: |
@@ -134,11 +135,28 @@ jobs:
            cd execution/reddit_analyzer
            uv run synthesize_podcast_audio.py --segments "segments_${{ matrix.category }}_$(date +%Y%m%d).json"
 
-       - name: Create Podcast Episode for ${{ matrix.category }}
-         if: env.OPENAI_API_KEY != ''
-         run: |
-           cd execution/reddit_analyzer
-          uv run audio_postproduction.py --raw-audio "audio/raw/" --output "episodes/"
+        - name: Create Podcast Episode for ${{ matrix.category }}
+          if: env.OPENAI_API_KEY != ''
+          run: |
+            cd execution/reddit_analyzer
+            uv run audio_postproduction.py --raw-audio "audio/raw/" --output "episodes/"
+
+        - name: Generate Episode Image for ${{ matrix.category }}
+          if: env.GOOGLE_GENERATIVEAI_API_KEY != ''
+          env:
+            GOOGLE_GENERATIVEAI_API_KEY: ${{ secrets.GOOGLE_GENERATIVEAI_API_KEY }}
+          run: |
+            cd execution/reddit_analyzer
+            uv run generate_episode_image.py --category "${{ matrix.category }}" --date "$(date +%Y%m%d)"
+
+        - name: Upload Image Artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: podcast-images-${{ matrix.category }}
+            path: |
+              execution/reddit_analyzer/images/covers/${{ matrix.category }}_*.png
+              execution/reddit_analyzer/images/thumbnails/${{ matrix.category }}_*.jpg
+            retention-days: 30
 
   commit-db:
     # Commit the updated DB after collection (independent of analysis)
